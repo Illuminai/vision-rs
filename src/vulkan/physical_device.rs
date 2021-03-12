@@ -16,8 +16,8 @@ pub struct PhysicalDevice {
 }
 
 impl PhysicalDevice {
-    pub fn get_optimal_device(instance: &Instance, surface: &Surface, required_extensions: Vec<*const i8>) -> Self {
-        let mut devices = PhysicalDevice::list_physical_devices(instance);
+    pub fn optimal_device(instance: &Instance, surface: &Surface, required_extensions: Vec<*const i8>) -> Self {
+        let mut devices = PhysicalDevice::physical_devices(instance);
         devices.retain(|device| PhysicalDevice::is_device_suitable(instance, surface, device, &required_extensions));
 
         let optimal_device = devices.into_iter().next();
@@ -39,21 +39,21 @@ impl PhysicalDevice {
         }
     }
 
-    pub fn get(&self) -> VkPhysicalDevice {
+    pub fn vk_physical_device(&self) -> VkPhysicalDevice {
         self.physical_device
     }
 
-    pub fn get_queue_family_indices(&self) -> &QueueFamilyIndices {
+    pub fn queue_family_indices(&self) -> &QueueFamilyIndices {
         &self.queue_family_indices
     }
 
-    pub fn get_required_extensions(&self) -> &Vec<*const i8> {
+    pub fn required_extensions(&self) -> &Vec<*const i8> {
         &self.required_extensions
     }
 
-    fn list_physical_devices(instance: &Instance) -> Vec<VkPhysicalDevice> {
+    fn physical_devices(instance: &Instance) -> Vec<VkPhysicalDevice> {
         let physical_devices = unsafe {
-            instance.get().enumerate_physical_devices()
+            instance.vk_instance().enumerate_physical_devices()
         }.expect("Failed to enumerate physical devices");
 
         physical_devices
@@ -70,7 +70,7 @@ impl PhysicalDevice {
     fn find_queue_families(instance: &Instance, surface: &Surface, physical_device: &VkPhysicalDevice)
                            -> (Option<u32>, Option<u32>) {
         let queue_families = unsafe {
-            instance.get().get_physical_device_queue_family_properties(*physical_device)
+            instance.vk_instance().get_physical_device_queue_family_properties(*physical_device)
         };
 
         let mut graphics_family = None;
@@ -82,8 +82,8 @@ impl PhysicalDevice {
                 graphics_family = Some(index);
             }
             let present_support = unsafe {
-                surface.get_surface_loader()
-                    .get_physical_device_surface_support(*physical_device, index, *surface.get_surface())
+                surface.vk_surface()
+                    .get_physical_device_surface_support(*physical_device, index, *surface.vk_surface_khr())
             };
             if present_support.unwrap() {
                 present_family = Some(index);
@@ -98,7 +98,7 @@ impl PhysicalDevice {
 
     fn check_extension_support(instance: &Instance, physical_device: &VkPhysicalDevice, required_extensions: &Vec<*const i8>) -> bool {
         let available_extensions = unsafe {
-            instance.get().enumerate_device_extension_properties(*physical_device)
+            instance.vk_instance().enumerate_device_extension_properties(*physical_device)
         }.expect("Failed to get device extension properties");
 
         for required_extension in required_extensions {

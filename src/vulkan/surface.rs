@@ -13,9 +13,9 @@ pub struct Surface {
 
 impl Surface {
     pub fn new(entry: &Entry, instance: &Instance, window: &Window) -> Self {
-        let surface_loader = VkSurface::new(entry, instance.get());
+        let surface_loader = VkSurface::new(entry, instance.vk_instance());
         let surface = unsafe {
-            ash_window::create_surface(entry, instance.get(), window, None)
+            ash_window::create_surface(entry, instance.vk_instance(), window, None)
         }.unwrap();
 
         Self {
@@ -24,11 +24,11 @@ impl Surface {
         }
     }
 
-    pub fn get_surface_loader(&self) -> &VkSurface {
+    pub fn vk_surface(&self) -> &VkSurface {
         &self.surface_loader
     }
 
-    pub fn get_surface(&self) -> &vk::SurfaceKHR {
+    pub fn vk_surface_khr(&self) -> &vk::SurfaceKHR {
         &self.surface
     }
 

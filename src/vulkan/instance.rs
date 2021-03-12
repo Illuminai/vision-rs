@@ -24,7 +24,7 @@ impl Instance {
             .engine_version(vk::make_version(0, 1, 0))
             .api_version(vk::make_version(1, 1, 0));
 
-        let mut extension_names = Instance::get_required_extensions(window);
+        let mut extension_names = Instance::required_extensions(window);
 
         if validation_info.is_enabled && validation_info.required_validation_layers.len() > 0 {
             extension_names.append(&mut DebugMessenger::required_extension_names());
@@ -57,13 +57,13 @@ impl Instance {
         }
     }
 
-    fn get_required_extensions(window: &Window) -> Vec<*const i8> {
+    fn required_extensions(window: &Window) -> Vec<*const i8> {
         let mut extensions: Vec<*const i8> = vec![];
         extensions.append(&mut Surface::required_extension_names(window));
         extensions
     }
 
-    pub fn get(&self) -> &VkInstance {
+    pub fn vk_instance(&self) -> &VkInstance {
         &self.instance
     }
 }

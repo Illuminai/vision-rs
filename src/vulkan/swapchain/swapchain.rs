@@ -1,32 +1,38 @@
 use ash::extensions::khr::{Swapchain as VkSwapchain};
 use ash::vk;
-use crate::vulkan::{Surface, Instance, Device};
+use crate::vulkan::{Surface, Instance, Device, Context};
 use crate::vulkan::swapchain::SwapchainSupportDetails;
-use ash::vk::{SwapchainKHR, Image, ImageView};
+use ash::vk::{SwapchainKHR, Image, ImageView, SurfaceFormatKHR, PresentModeKHR, Extent2D};
 use ash::version::DeviceV1_0;
 
 use std::sync::Arc;
+use std::rc::Rc;
 
 
 pub struct Swapchain {
-    device: Arc<Device>,
+    context: Rc<Context>,
 
     swapchain_loader: VkSwapchain,
     swapchain: SwapchainKHR,
     images: Vec<Image>,
     image_views: Vec<ImageView>,
+
+    format: SurfaceFormatKHR,
+    present_mode: PresentModeKHR,
+    extent: Extent2D,
+    image_count: u32,
 }
 
 impl Swapchain {
-    pub fn new(instance: &Instance, device: Arc<Device>, surface: &Surface, preferred_dimensions: [u32; 2]) -> Self {
-        let support_details = SwapchainSupportDetails::new(device.get_physical_device(), surface);
-        let format = support_details.get_optimal_surface_format();
-        let present_mode = support_details.get_optimal_present_mode();
-        let extent = support_details.get_optimal_extent(preferred_dimensions);
-        let image_count = support_details.get_optimal_image_count();
+    pub fn new(context: Rc<Context>, preferred_dimensions: [u32; 2]) -> Self {
+        let support_details = SwapchainSupportDetails::new(context.device().physical_device(), context.surface());
+        let format = support_details.optimal_surface_format();
+        let present_mode = support_details.optimal_present_mode();
+        let extent = support_details.optimal_extent(preferred_dimensions);
+        let image_count = support_details.optimal_image_count();
 
         let mut create_info = vk::SwapchainCreateInfoKHR::builder()
-            .surface(*surface.get_surface())
+            .surface(*context.surface().vk_surface_khr())
             .min_image_count(image_count)
             .image_format(format.format)
             .image_color_space(format.color_space)
@@ -34,7 +40,7 @@ impl Swapchain {
             .image_array_layers(1)
             .image_usage(vk::ImageUsageFlags::COLOR_ATTACHMENT);
 
-        let queue_family_indices = device.get_physical_device().get_queue_family_indices();
+        let queue_family_indices = context.device().physical_device().queue_family_indices();
         let queue_families = [queue_family_indices.graphics_family, queue_family_indices.present_family];
 
         create_info = if queue_family_indices.graphics_family != queue_family_indices.present_family {
@@ -44,12 +50,12 @@ impl Swapchain {
             create_info.image_sharing_mode(vk::SharingMode::EXCLUSIVE)
         };
 
-        create_info = create_info.pre_transform(support_details.get_capabilities().current_transform)
+        create_info = create_info.pre_transform(support_details.capabilities().current_transform)
             .composite_alpha(vk::CompositeAlphaFlagsKHR::OPAQUE)
             .present_mode(present_mode)
             .clipped(true);
 
-        let swapchain_loader = VkSwapchain::new(instance.get(), device.get_device());
+        let swapchain_loader = VkSwapchain::new(context.instance().vk_instance(), context.device().vk_device());
         let swapchain = unsafe {
             swapchain_loader.create_swapchain(&create_info, None)
                 .expect("Failed to create swapchain")
@@ -79,17 +85,37 @@ impl Swapchain {
                         layer_count: 1,
                     })
                     .image(image);
-                unsafe { device.get_device().create_image_view(&view_create_info, None) }
+                unsafe { context.device().vk_device().create_image_view(&view_create_info, None) }
                     .expect("Failed to create image view")
             }).collect();
 
         Self {
-            device,
+            context,
             swapchain_loader,
             swapchain,
             images,
             image_views,
+            format,
+            present_mode,
+            extent,
+            image_count,
         }
+    }
+
+    pub fn format(&self) -> &SurfaceFormatKHR {
+        &self.format
+    }
+
+    pub fn present_mode(&self) -> &PresentModeKHR {
+        &self.present_mode
+    }
+
+    pub fn extent(&self) -> &Extent2D {
+        &self.extent
+    }
+
+    pub fn image_count(&self) -> &u32 {
+        &self.image_count
     }
 }
 
@@ -97,7 +123,7 @@ impl Drop for Swapchain {
     fn drop(&mut self) {
         unsafe {
             for image_view in self.image_views.iter() {
-                self.device.get_device().destroy_image_view(*image_view, None);
+                self.context.device().vk_device().destroy_image_view(*image_view, None);
             }
             self.swapchain_loader.destroy_swapchain(self.swapchain, None);
         }

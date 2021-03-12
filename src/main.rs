@@ -1,4 +1,4 @@
-use crate::vulkan::{Instance, PhysicalDevice, Surface, Device};
+use crate::vulkan::{Instance, PhysicalDevice, Surface, Device, Context};
 use crate::vulkan::debug::ValidationInfo;
 use ash::Entry;
 use std::ffi::CString;
@@ -7,6 +7,7 @@ use winit::window::WindowBuilder;
 use winit::event::{WindowEvent, Event};
 use crate::vulkan::swapchain::Swapchain;
 use std::sync::Arc;
+use std::rc::Rc;
 
 mod vulkan;
 
@@ -24,24 +25,19 @@ fn main() {
 
     // Vulkan Context
 
-    let entry = Entry::new().unwrap();
-    let info = ValidationInfo {
+    let validation_info = ValidationInfo {
         is_enabled: true,
         required_validation_layers: vec![CString::new("VK_LAYER_KHRONOS_validation").unwrap()],
     };
 
-    let instance = Instance::new(&entry, &window, info);
-    let surface = Surface::new(&entry, &instance, &window);
-
     let required_extensions = vec![ash::extensions::khr::Swapchain::name().as_ptr()];
-    let physical_device = PhysicalDevice::get_optimal_device(&instance, &surface, required_extensions);
 
-    let device = Arc::new(Device::new(&instance, physical_device));
+    let context = Rc::new(Context::new(&window, validation_info, required_extensions));
+
 
     // Vulkan impl
 
-    let swapchain = Swapchain::new(&instance, device, &surface,
-                                   [window.inner_size().width, window.inner_size().height]);
+
 
     // Winit Loop
 

@@ -1,0 +1,36 @@
+#version 450
+
+// Work size?
+layout (local_size_x = 4, local_size_y = 4) in;
+
+// Binding for image
+layout (binding = 0, rgba8) uniform image2D computeImage;
+
+struct Shape {
+    int type;
+};
+
+struct SignedDistanceField {
+    int type;
+};
+
+
+// Specific type
+struct Sphere {
+    float radius;
+};
+
+// Buffer
+layout (binding = 1) buffer Spheres {
+    Sphere spheres[];
+};
+
+// Main
+void main() {
+    uint idx = gl_GlobalInvocationID.x;
+    uint idy = gl_GlobalInvocationID.y;
+
+    finalColor = vec3(1.0, 1.0, 0.0);
+
+    imageStore(computeImage, ivec2(gl_GlobalInvocationID.xy), vec4(finalColor, 0.0));
+}

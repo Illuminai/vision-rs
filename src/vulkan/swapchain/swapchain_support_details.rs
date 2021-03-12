@@ -10,18 +10,18 @@ pub struct SwapchainSupportDetails {
 impl SwapchainSupportDetails {
     pub fn new(physical_device: &PhysicalDevice, surface: &Surface) -> Self {
         let capabilities = unsafe {
-            surface.get_surface_loader()
-                .get_physical_device_surface_capabilities(physical_device.get(), *surface.get_surface())
+            surface.vk_surface()
+                .get_physical_device_surface_capabilities(physical_device.vk_physical_device(), *surface.vk_surface_khr())
                 .expect("Failed to get physical device surface capabilities")
         };
         let formats = unsafe {
-            surface.get_surface_loader()
-                .get_physical_device_surface_formats(physical_device.get(), *surface.get_surface())
+            surface.vk_surface()
+                .get_physical_device_surface_formats(physical_device.vk_physical_device(), *surface.vk_surface_khr())
                 .expect("Failed to get physical device surface capabilities")
         };
         let present_modes = unsafe {
-            surface.get_surface_loader()
-                .get_physical_device_surface_present_modes(physical_device.get(), *surface.get_surface())
+            surface.vk_surface()
+                .get_physical_device_surface_present_modes(physical_device.vk_physical_device(), *surface.vk_surface_khr())
                 .expect("Failed to get physical device surface capabilities")
         };
 
@@ -32,7 +32,7 @@ impl SwapchainSupportDetails {
         }
     }
 
-    pub fn get_optimal_surface_format(&self) -> vk::SurfaceFormatKHR {
+    pub fn optimal_surface_format(&self) -> vk::SurfaceFormatKHR {
         for &format in self.formats.iter() {
             if format.format == vk::Format::B8G8R8A8_SRGB && format.color_space == vk::ColorSpaceKHR::SRGB_NONLINEAR {
                 return format;
@@ -41,7 +41,7 @@ impl SwapchainSupportDetails {
         self.formats.first().expect("Failed to get optimal surface format").clone()
     }
 
-    pub fn get_optimal_present_mode(&self) -> vk::PresentModeKHR {
+    pub fn optimal_present_mode(&self) -> vk::PresentModeKHR {
         if self.present_modes.contains(&vk::PresentModeKHR::MAILBOX) {
             vk::PresentModeKHR::MAILBOX
         } else if self.present_modes.contains(&vk::PresentModeKHR::FIFO) {
@@ -51,7 +51,7 @@ impl SwapchainSupportDetails {
         }
     }
 
-    pub fn get_optimal_extent(&self, preferred_dimensions: [u32; 2]) -> vk::Extent2D {
+    pub fn optimal_extent(&self, preferred_dimensions: [u32; 2]) -> vk::Extent2D {
         if self.capabilities.current_extent.width != std::u32::MAX {
             return self.capabilities.current_extent;
         }
@@ -62,7 +62,7 @@ impl SwapchainSupportDetails {
         vk::Extent2D { width, height }
     }
 
-    pub fn get_optimal_image_count(&self) -> u32 {
+    pub fn optimal_image_count(&self) -> u32 {
         let max = self.capabilities.max_image_count;
         let mut preferred = self.capabilities.min_image_count + 1;
         if max > 0 && preferred > max {
@@ -71,15 +71,15 @@ impl SwapchainSupportDetails {
         preferred
     }
 
-    pub fn get_capabilities(&self) -> &vk::SurfaceCapabilitiesKHR {
+    pub fn capabilities(&self) -> &vk::SurfaceCapabilitiesKHR {
         &self.capabilities
     }
 
-    pub fn get_formats(&self) -> &Vec<vk::SurfaceFormatKHR> {
+    pub fn formats(&self) -> &Vec<vk::SurfaceFormatKHR> {
         &self.formats
     }
 
-    pub fn get_present_modes(&self) -> &Vec<vk::PresentModeKHR> {
+    pub fn present_modes(&self) -> &Vec<vk::PresentModeKHR> {
         &self.present_modes
     }
 }
