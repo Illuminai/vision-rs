@@ -5,6 +5,7 @@ use ash::version::DeviceV1_0;
 use ash::vk;
 
 use crate::vulkan::{Context, Device, Image, Instance, Surface};
+use crate::vulkan::render_pass::RenderPass;
 use crate::vulkan::swapchain::SwapchainSupportDetails;
 
 pub struct Swapchain {
@@ -23,7 +24,7 @@ pub struct Swapchain {
 }
 
 impl Swapchain {
-    pub fn new(context: Arc<Context>, preferred_dimensions: [u32; 2]) -> Self {
+    pub fn new(context: Arc<Context>, render_pass: &RenderPass, preferred_dimensions: [u32; 2]) -> Self {
         let support_details = SwapchainSupportDetails::new(context.device().physical_device(), context.surface());
         let format = support_details.optimal_surface_format();
         let present_mode = support_details.optimal_present_mode();
@@ -92,13 +93,27 @@ impl Swapchain {
                     .expect("Failed to create image view")
             }).collect();
 
-        //TODO: framebuffers, but render pass needed
-        /*let framebuffers = image_views.iter()
-            .map(|&image_view| {
-                let attachments = [image_view];
-                let framebuffer_create_info = vk::FramebufferCreateInfo::builder()
-                    .
-            }).collect();*/
+        let framebuffers: Vec<vk::Framebuffer> = image_views
+            .iter()
+            .map(|image_view| match render_pass.color_attachment() {
+                Some(texture) => vec![texture.view(), render_pass.depth_attachment().view(), *image_view],
+                _ => vec![*image_view, render_pass.depth_attachment().view()],
+            })
+            .map(|attachments| {
+                let framebuffer_info = vk::FramebufferCreateInfo::builder()
+                    .render_pass(render_pass.vk_render_pass())
+                    .attachments(&attachments)
+                    .width(extent.width)
+                    .height(extent.height)
+                    .layers(1);
+                unsafe {
+                    context
+                        .device()
+                        .vk_device()
+                        .create_framebuffer(&framebuffer_info, None)
+                        .expect("Failed to create framebuffer")
+                }
+            }).collect();
 
         Self {
             context,
@@ -110,6 +125,7 @@ impl Swapchain {
             present_mode,
             extent,
             image_count,
+            framebuffers
         }
     }
 

@@ -393,6 +393,10 @@ impl Texture {
 
         Texture::new(Arc::clone(context), image, image_view, Some(sampler))
     }
+
+    pub fn view(&self) -> vk::ImageView {
+        self.view
+    }
 }
 
 impl Drop for Texture {
