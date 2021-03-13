@@ -1,6 +1,7 @@
+use std::ffi::{CStr, CString};
+
 use ash::Entry;
 use ash::version::EntryV1_0;
-use std::ffi::{CStr, CString};
 
 pub struct ValidationInfo {
     pub is_enabled: bool,

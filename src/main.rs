@@ -1,13 +1,15 @@
-use crate::vulkan::{Instance, PhysicalDevice, Surface, Device, Context};
-use crate::vulkan::debug::ValidationInfo;
-use ash::Entry;
 use std::ffi::CString;
-use winit::event_loop::{EventLoop, ControlFlow};
-use winit::window::WindowBuilder;
-use winit::event::{WindowEvent, Event};
-use crate::vulkan::swapchain::Swapchain;
-use std::sync::Arc;
 use std::rc::Rc;
+use std::sync::Arc;
+
+use ash::Entry;
+use winit::event::{Event, WindowEvent};
+use winit::event_loop::{ControlFlow, EventLoop};
+use winit::window::WindowBuilder;
+
+use crate::vulkan::{Context, Device, Instance, PhysicalDevice, Surface};
+use crate::vulkan::debug::ValidationInfo;
+use crate::vulkan::swapchain::Swapchain;
 
 mod vulkan;
 

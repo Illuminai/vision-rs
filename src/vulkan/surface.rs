@@ -1,10 +1,9 @@
-use ash::extensions::khr::{Surface as VkSurface};
-use ash::{vk, Entry};
-
-use crate::vulkan::Instance;
-
+use ash::{Entry, vk};
+use ash::extensions::khr::Surface as VkSurface;
 use ash_window;
 use winit::window::Window;
+
+use crate::vulkan::Instance;
 
 pub struct Surface {
     surface: vk::SurfaceKHR,

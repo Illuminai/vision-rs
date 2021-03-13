@@ -1,12 +1,11 @@
-use ash::{Instance as VkInstance, vk, Entry};
 use std::ffi::CString;
 
-use crate::vulkan::Surface;
-use crate::vulkan::debug::{ValidationInfo, DebugMessenger};
-
-use ash::version::{InstanceV1_0, EntryV1_0};
+use ash::{Entry, Instance as VkInstance, vk};
+use ash::version::{EntryV1_0, InstanceV1_0};
 use winit::window::Window;
 
+use crate::vulkan::debug::{DebugMessenger, ValidationInfo};
+use crate::vulkan::Surface;
 
 pub struct Instance {
     instance: VkInstance,

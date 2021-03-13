@@ -1,5 +1,6 @@
-use crate::vulkan::{PhysicalDevice, Surface};
 use ash::vk;
+
+use crate::vulkan::{PhysicalDevice, Surface};
 
 pub struct SwapchainSupportDetails {
     capabilities: vk::SurfaceCapabilitiesKHR,

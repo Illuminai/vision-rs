@@ -1,8 +1,10 @@
-use crate::vulkan::Context;
-use ash::vk::{ShaderModule as VkShaderModule};
-use ash::vk;
 use std::rc::Rc;
+
 use ash::version::DeviceV1_0;
+use ash::vk;
+use ash::vk::ShaderModule as VkShaderModule;
+
+use crate::vulkan::Context;
 
 pub struct ShaderModule {
     context: Rc<Context>,

@@ -1,9 +1,12 @@
-use crate::vulkan::{Instance, Surface};
-use ash::version::InstanceV1_0;
-use ash::vk::{PhysicalDevice as VkPhysicalDevice};
-use ash::vk;
-use std::ffi::{CStr};
+use std::ffi::CStr;
 
+use ash::version::InstanceV1_0;
+use ash::vk;
+use ash::vk::PhysicalDevice as VkPhysicalDevice;
+
+use crate::vulkan::{Instance, Surface};
+
+#[derive(Clone, Copy)]
 pub struct QueueFamilyIndices {
     pub graphics_family: u32,
     pub present_family: u32,
@@ -43,8 +46,8 @@ impl PhysicalDevice {
         self.physical_device
     }
 
-    pub fn queue_family_indices(&self) -> &QueueFamilyIndices {
-        &self.queue_family_indices
+    pub fn queue_family_indices(&self) -> QueueFamilyIndices {
+        self.queue_family_indices
     }
 
     pub fn required_extensions(&self) -> &Vec<*const i8> {

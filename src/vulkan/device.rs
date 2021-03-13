@@ -1,10 +1,12 @@
-use crate::vulkan::{Instance, PhysicalDevice, Surface};
-use ash::{Device as VkDevice};
-use ash::vk;
-use ash::version::{InstanceV1_0, DeviceV1_0};
 use std::collections::HashSet;
 use std::ops::Deref;
+
+use ash::Device as VkDevice;
+use ash::version::{DeviceV1_0, InstanceV1_0};
+use ash::vk;
 use ash::vk::Queue;
+
+use crate::vulkan::{Instance, PhysicalDevice, Surface};
 
 pub struct Device {
     device: VkDevice,
@@ -68,12 +70,12 @@ impl Device {
         &self.device
     }
 
-    pub fn graphics_queue(&self) -> &Queue {
-        &self.graphics_queue
+    pub fn graphics_queue(&self) -> Queue {
+        self.graphics_queue
     }
 
-    pub fn present_queue(&self) -> &Queue {
-        &self.present_queue
+    pub fn present_queue(&self) -> Queue {
+        self.present_queue
     }
 }
 

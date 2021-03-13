@@ -1,9 +1,10 @@
-use ash::extensions::ext::DebugUtils;
-use ash::{Entry, Instance};
-use ash::vk;
-use std::os::raw::c_void;
 use std::borrow::Cow;
 use std::ffi::CStr;
+use std::os::raw::c_void;
+
+use ash::{Entry, Instance};
+use ash::extensions::ext::DebugUtils;
+use ash::vk;
 
 pub struct DebugMessenger {
     utils_loader: DebugUtils,

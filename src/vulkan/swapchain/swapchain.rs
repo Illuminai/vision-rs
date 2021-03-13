@@ -1,30 +1,29 @@
-use ash::extensions::khr::{Swapchain as VkSwapchain};
-use ash::vk;
-use crate::vulkan::{Surface, Instance, Device, Context};
-use crate::vulkan::swapchain::SwapchainSupportDetails;
-use ash::vk::{SwapchainKHR, Image, ImageView, SurfaceFormatKHR, PresentModeKHR, Extent2D};
-use ash::version::DeviceV1_0;
-
 use std::sync::Arc;
-use std::rc::Rc;
 
+use ash::extensions::khr::Swapchain as VkSwapchain;
+use ash::version::DeviceV1_0;
+use ash::vk;
+
+use crate::vulkan::{Context, Device, Image, Instance, Surface};
+use crate::vulkan::swapchain::SwapchainSupportDetails;
 
 pub struct Swapchain {
-    context: Rc<Context>,
+    context: Arc<Context>,
 
     swapchain_loader: VkSwapchain,
-    swapchain: SwapchainKHR,
+    swapchain: vk::SwapchainKHR,
     images: Vec<Image>,
-    image_views: Vec<ImageView>,
+    image_views: Vec<vk::ImageView>,
+    framebuffers: Vec<vk::Framebuffer>,
 
-    format: SurfaceFormatKHR,
-    present_mode: PresentModeKHR,
-    extent: Extent2D,
+    format: vk::SurfaceFormatKHR,
+    present_mode: vk::PresentModeKHR,
+    extent: vk::Extent2D,
     image_count: u32,
 }
 
 impl Swapchain {
-    pub fn new(context: Rc<Context>, preferred_dimensions: [u32; 2]) -> Self {
+    pub fn new(context: Arc<Context>, preferred_dimensions: [u32; 2]) -> Self {
         let support_details = SwapchainSupportDetails::new(context.device().physical_device(), context.surface());
         let format = support_details.optimal_surface_format();
         let present_mode = support_details.optimal_present_mode();
@@ -64,10 +63,14 @@ impl Swapchain {
         let images = unsafe {
             swapchain_loader.get_swapchain_images(swapchain)
                 .expect("Failed to get swapchain images")
+                .iter()
+                .map(|image| {
+                    Image::create_swapchain_image(context.clone(), *image, format, extent)
+                }).collect::<Vec<_>>()
         };
 
-        let image_views = images.iter()
-            .map(|&image| {
+        let image_views: Vec<vk::ImageView> = images.iter()
+            .map(|image| {
                 let view_create_info = vk::ImageViewCreateInfo::builder()
                     .view_type(vk::ImageViewType::TYPE_2D)
                     .format(format.format)
@@ -84,10 +87,18 @@ impl Swapchain {
                         base_array_layer: 0,
                         layer_count: 1,
                     })
-                    .image(image);
+                    .image(image.vk_image());
                 unsafe { context.device().vk_device().create_image_view(&view_create_info, None) }
                     .expect("Failed to create image view")
             }).collect();
+
+        //TODO: framebuffers, but render pass needed
+        /*let framebuffers = image_views.iter()
+            .map(|&image_view| {
+                let attachments = [image_view];
+                let framebuffer_create_info = vk::FramebufferCreateInfo::builder()
+                    .
+            }).collect();*/
 
         Self {
             context,
@@ -102,15 +113,15 @@ impl Swapchain {
         }
     }
 
-    pub fn format(&self) -> &SurfaceFormatKHR {
+    pub fn format(&self) -> &vk::SurfaceFormatKHR {
         &self.format
     }
 
-    pub fn present_mode(&self) -> &PresentModeKHR {
+    pub fn present_mode(&self) -> &vk::PresentModeKHR {
         &self.present_mode
     }
 
-    pub fn extent(&self) -> &Extent2D {
+    pub fn extent(&self) -> &vk::Extent2D {
         &self.extent
     }
 
